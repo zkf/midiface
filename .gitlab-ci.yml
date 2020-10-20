@@ -1,0 +1,18 @@
+image: node:latest
+
+stages:
+  - pages
+
+pages:
+  stage: pages
+  script:
+    - npm install
+    - npm run build
+    - mkdir -p public/{dist,src}
+    - cp dist/main.js public/dist/
+    - cp src/midi.js public/src/
+    - cp index.html public/
+
+  artifacts:
+    paths:
+    - public
