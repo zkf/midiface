@@ -1,0 +1,24 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Main</title>
+  <style>body { padding: 0; margin: 0; }</style>
+  <script src="dist/main.js"></script>
+  <script src="src/midi.js"></script>
+</head>
+
+<body>
+<div id="app-container"></div>
+<script>
+  (async () => {
+    const app = Elm.Main.init({
+      node: document.getElementById('app-container')
+    })
+    const send = app.ports.midiReceiver.send
+    const subscribe = app.ports.midiSender.subscribe
+    await midiInit(send, subscribe)
+  })()
+</script>
+</body>
+</html>
