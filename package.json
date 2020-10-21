@@ -1,6 +1,6 @@
 {
   "private": true,
-  "name": "brutecontrol",
+  "name": "midiface",
   "scripts": {
     "dev": "elm-live --verbose --host 0.0.0.0 --port 9000 -- src/Main.elm --output=dist/main.js",
     "build": "elm make src/Main.elm --output=dist/main.js",
