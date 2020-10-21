@@ -1,4 +1,4 @@
-module Microbrute exposing (Command, Setting, getCommandData, optionName, optionValue, settings, updateSetting)
+module Microbrute exposing (Command, Setting, SettingsGroup, getCommandData, optionName, optionValue, settings, updateSetting)
 
 
 type alias Setting =
@@ -6,27 +6,58 @@ type alias Setting =
     , values : List Command
     }
 
+type alias SettingsGroup = {
+    name: String,
+    settings: List Setting
+  }
 
-settings : List Setting
+sysexCommandList = List.map SysexCommand
+midiCommandList = List.map MidiCommand
+
+keyboardParameters : SettingsGroup
+keyboardParameters =
+    { name = "Keyboard parameters"
+    , settings = [ 
+        { values = sysexCommandList <| List.map KeyboardNotePriorityValue [ High, Last, Low ]
+        , selected =  Nothing
+        },
+        -- velocity response,
+        { values = midiCommandList <| List.map LocalControl [ On, Off ]
+        , selected =  Nothing
+        }
+    ]}
+
+moduleParameters : SettingsGroup
+moduleParameters =
+    { name = "Module parameters"
+    , settings = [ 
+        { values = sysexCommandList <| List.map LfoKeyRetriggerValue [ On, Off ]
+        , selected =  Nothing
+        },
+        { values = sysexCommandList <| List.map EnvelopeLegatoModeValue [ On, Off ]
+        , selected =  Nothing
+        }
+        -- bend range 1-12
+        -- gate
+        -- sync
+    ]}
+
+
+settings : List SettingsGroup
 settings =
-    let
-        sysex =
-            List.map (List.map SysexCommand)
-                [ List.map LfoKeyRetriggerValue [ On, Off ]
-                , List.map KeyboardNotePriorityValue [ High, Last, Low ]
-                , List.map EnvelopeLegatoModeValue [ On, Off ]
-                ]
-
-        midi =
-            List.map (List.map MidiCommand) [ List.map LocalControl [ On, Off ] ]
-    in
-    List.map (\values -> { selected = Nothing, values = values }) (sysex ++ midi)
+  [keyboardParameters
+  ,moduleParameters
+  ]
 
 
-updateSetting : List Setting -> Command -> List Setting
-updateSetting settingss newValue =
-    List.map (replace newValue) settingss
+updateSetting : List SettingsGroup -> Command -> List SettingsGroup
+updateSetting settingsGroups newValue =
+    List.map (replace_ newValue) settingsGroups
 
+
+replace_ : Command -> SettingsGroup -> SettingsGroup
+replace_ newValue settingsGroup =
+  { settingsGroup | settings = List.map (replace newValue) settingsGroup.settings}
 
 replace : Command -> Setting -> Setting
 replace newValue setting =

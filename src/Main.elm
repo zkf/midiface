@@ -10,7 +10,7 @@ import Html.Events.Extra exposing (onChange)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Pipeline exposing (required)
 import Json.Encode as Encode exposing (Value)
-import Microbrute as Microbrute exposing (Command, Setting, getCommandData, optionName, optionValue, updateSetting)
+import Microbrute as Microbrute exposing (Command, Setting, SettingsGroup, getCommandData, optionName, optionValue, updateSetting)
 
 
 
@@ -187,7 +187,7 @@ type alias Model =
     , messages : List MidiMessage
     , errors : List String
     , counter : Int
-    , settings : List Microbrute.Setting
+    , settings : List Microbrute.SettingsGroup
     }
 
 
@@ -269,8 +269,8 @@ view model =
         , div [] [ text (String.fromInt model.counter) ]
         , button [ onClick Increment ] [ text "+" ]
         , midiPortSelector <| List.filter (\{ type_ } -> type_ == Output) model.ports
-        , optionsHtml model.settings
-        , div [ style "display" "flex", style "justify-content" "space-between" ] <| List.map slider model.settings
+        , optionsGroupsHtml model.settings
+        , div [ style "display" "flex", style "justify-content" "space-between" ] [sliderGroupsHtml model.settings]
         , div [] (List.map (\x -> pre [] [ text <| Debug.toString x ]) model.settings)
         , div [] [ pre [] [ text <| Debug.toString model.selectedOutputPort ] ]
         , pre [] (List.map (\x -> text x.name) model.ports)
@@ -304,6 +304,29 @@ flip : (c -> b -> a) -> b -> c -> a
 flip fn b a =
     fn a b
 
+sliderGroupsHtml : List SettingsGroup -> Html Msg
+sliderGroupsHtml  =
+  div [] << List.map sliderGroupHtml
+
+sliderGroupHtml : SettingsGroup -> Html Msg
+sliderGroupHtml settingsGroup =
+    fieldset []
+        ( legend [] [ text settingsGroup.name ]
+        ::  sliders settingsGroup.settings)
+
+sliders = List.map slider
+
+optionsGroupsHtml : List SettingsGroup -> Html Msg
+optionsGroupsHtml  =
+  div [] << List.map optionsGroupHtml
+
+optionsGroupHtml : SettingsGroup -> Html Msg
+optionsGroupHtml settingsGroup =
+    fieldset []
+        [ legend []
+            [ text settingsGroup.name ]
+        , optionsHtml settingsGroup.settings
+        ]
 
 optionsHtml : List Setting -> Html Msg
 optionsHtml settings =

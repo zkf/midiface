@@ -4,6 +4,7 @@ elm-stuff
 repl-temp-*
 
 node_modules
+yarn-error.log
 
 *.code-workspace
 .vscode
