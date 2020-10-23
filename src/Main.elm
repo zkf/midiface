@@ -1,16 +1,38 @@
 port module Main exposing (main)
 
-
 import Browser
 import Dict exposing (Dict)
-import Html exposing (Html, button, div, fieldset, input, label, legend, option, pre, select, text)
+import Html
+    exposing
+        ( Html
+        , button
+        , div
+        , fieldset
+        , input
+        , label
+        , legend
+        , option
+        , pre
+        , select
+        , span
+        , text
+        )
 import Html.Attributes exposing (checked, name, style, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Events.Extra exposing (onChange)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Pipeline exposing (required)
 import Json.Encode as Encode exposing (Value)
-import Microbrute as Microbrute exposing (Command, Setting, SettingsGroup, getCommandData, optionName, optionValue, updateSetting)
+import Microbrute as Microbrute
+    exposing
+        ( Command
+        , Setting
+        , SettingsGroup
+        , getCommandData
+        , optionName
+        , optionValue
+        , updateSetting
+        )
 
 
 
@@ -265,17 +287,27 @@ toMidiMessage setting { id } =
 view : Model -> Html Msg
 view model =
     div []
-        [ button [ onClick Decrement ] [ text "-" ]
-        , div [] [ text (String.fromInt model.counter) ]
-        , button [ onClick Increment ] [ text "+" ]
-        , midiPortSelector <| List.filter (\{ type_ } -> type_ == Output) model.ports
-        , optionsGroupsHtml model.settings
-        , div [ style "display" "flex", style "justify-content" "space-between" ] [sliderGroupsHtml model.settings]
-        , div [] (List.map (\x -> pre [] [ text <| Debug.toString x ]) model.settings)
+        [ midiPortSelector <|
+            List.filter (\{ type_ } -> type_ == Output)
+                model.ports
+        , div
+            [ style "display" "flex"
+            , style "justify-content" "space-between"
+            ]
+            [ sliderGroupsHtml model.settings
+            ]
+        , div []
+            (List.map (\x -> pre [] [ text <| Debug.toString x ])
+                model.settings
+            )
         , div [] [ pre [] [ text <| Debug.toString model.selectedOutputPort ] ]
         , pre [] (List.map (\x -> text x.name) model.ports)
         , pre [] (List.map (\x -> text x.data) model.messages)
         , pre [] (List.map (\x -> text x) model.errors)
+        , optionsGroupsHtml model.settings
+        , button [ onClick Decrement ] [ text "-" ]
+        , div [] [ text (String.fromInt model.counter) ]
+        , button [ onClick Increment ] [ text "+" ]
         ]
 
 
@@ -287,11 +319,23 @@ midiPortSelector xs =
             Dict.fromList <| zip (List.map (\{ id } -> portIdToString id) xs) xs
 
         handleInput =
-            Maybe.withDefault NoOp << Maybe.map SelectMidiPort << flip Dict.get d
+            Maybe.withDefault NoOp
+                << Maybe.map SelectMidiPort
+                << flip Dict.get
+                    d
     in
     div []
         [ select [ onInput handleInput ]
-            (option [] [ text "Select a MIDI interface …" ] :: List.map (\x -> option [ value <| portIdToString x.id ] [ text x.name ]) xs)
+            (option []
+                [ text "Select a MIDI interface …" ]
+                :: List.map
+                    (\x ->
+                        option [ value <| portIdToString x.id ]
+                            [ text x.name
+                            ]
+                    )
+                    xs
+            )
         ]
 
 
@@ -304,21 +348,28 @@ flip : (c -> b -> a) -> b -> c -> a
 flip fn b a =
     fn a b
 
+
 sliderGroupsHtml : List SettingsGroup -> Html Msg
-sliderGroupsHtml  =
-  div [] << List.map sliderGroupHtml
+sliderGroupsHtml =
+    div [] << List.map sliderGroupHtml
+
 
 sliderGroupHtml : SettingsGroup -> Html Msg
 sliderGroupHtml settingsGroup =
-    fieldset []
-        ( legend [] [ text settingsGroup.name ]
-        ::  sliders settingsGroup.settings)
+    fieldset [ style "display" "flex" ]
+        (legend [] [ text settingsGroup.name ]
+            :: sliders settingsGroup.settings
+        )
 
-sliders = List.map slider
+
+sliders =
+    List.map slider
+
 
 optionsGroupsHtml : List SettingsGroup -> Html Msg
-optionsGroupsHtml  =
-  div [] << List.map optionsGroupHtml
+optionsGroupsHtml =
+    div [] << List.map optionsGroupHtml
+
 
 optionsGroupHtml : SettingsGroup -> Html Msg
 optionsGroupHtml settingsGroup =
@@ -328,13 +379,10 @@ optionsGroupHtml settingsGroup =
         , optionsHtml settingsGroup.settings
         ]
 
+
 optionsHtml : List Setting -> Html Msg
 optionsHtml settings =
     div [] <| List.map radioButtons settings
-
-
-
--- radioButtons : Option OptionType -> Html Msg
 
 
 uncurry : (a -> b -> c) -> ( a, b ) -> c
@@ -380,16 +428,16 @@ isNothing =
     not << isJust
 
 
-
--- d tag x =
---     Debug.log (tag ++ " " ++ Debug.toString x) x
-
-
 slider : Setting -> Html Msg
 slider { selected, values } =
     let
-        valueToNumber =
-            Maybe.map (String.fromInt << (-) (List.length values - 1) << indexOf values)
+        selectedValue =
+            maybeToList <|
+                Maybe.map (value << String.fromInt << indexOf values)
+                    selected
+
+        maxValue =
+            String.fromInt <| List.length values - 1
 
         maybeToList x =
             case x of
@@ -400,8 +448,7 @@ slider { selected, values } =
                     [ v ]
 
         numberToValue =
-            -- Maybe.andThen lookup << String.toInt
-            Maybe.andThen lookup << Maybe.map ((-) (List.length values - 1)) << String.toInt
+            Maybe.andThen lookup << String.toInt
 
         lookup x =
             List.head <| List.drop x values
@@ -414,7 +461,7 @@ slider { selected, values } =
                 Just x ->
                     SetOpt x
     in
-    div [ style "margin" "1em 0" ]
+    div [ style "margin" "1em 2em" ]
         [ label [ style "display" "inline-block" ]
             [ div
                 [ style "display" "flex"
@@ -425,14 +472,19 @@ slider { selected, values } =
                     ([ type_ "range"
                      , style "appearance" "slider-vertical"
                      , style "width" "1em"
-                     , style "height" "5em"
                      , Html.Attributes.min "0"
-                     , Html.Attributes.max (String.fromInt <| List.length values - 1)
-                     , Html.Attributes.disabled <| isNothing <| valueToNumber selected
+                     , Html.Attributes.max maxValue
+                     , Html.Attributes.disabled <| isNothing selected
                      , onChange <| handleChange << numberToValue
                      ]
-                        ++ List.map value
-                            (maybeToList <| valueToNumber selected)
+                        ++ maybeToList
+                            (if List.length values <= 3 then
+                                Just (style "height" "5em")
+
+                             else
+                                Nothing
+                            )
+                        ++ selectedValue
                     )
                     []
                 , div
@@ -442,9 +494,9 @@ slider { selected, values } =
                         , ( "justify-content", "space-between" )
                         ]
                     )
-                    (List.map valueLabel values)
+                    (List.map valueLabel <| List.reverse values)
                 ]
-            , text (getOptionName values)
+            , span [] [ text <| getOptionName values ]
             ]
         ]
 
@@ -468,7 +520,6 @@ radioButtons { selected, values } =
     fieldset [] <|
         legend [] [ text name ]
             :: List.concatMap (createRadioButton name selected) values
-
 
 
 createRadioButton : String -> Maybe Command -> Command -> List (Html Msg)
